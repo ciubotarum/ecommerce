@@ -1,51 +1,46 @@
 package com.telusko.EcommerceApp.service;
 
 import com.telusko.EcommerceApp.model.Product;
+import com.telusko.EcommerceApp.repository.ProductRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.List;
 
 @Service
 public class ProductService {
+    @Autowired
+    private ProductRepo repo;
 
-    List<Product> products = new ArrayList<>(Arrays.asList(
-            new Product(101, "Iphone", 5000),
-            new Product(102, "Cannon Camera", 7000),
-            new Product(103, "Shure Mic", 20000)));
-
-    public List<Product> getProducts() {
-        return products;
+    public List<Product> getAllProducts() {
+        return repo.findAll();
     }
 
-    public Product getProductById(int prodId) {
-        return products.stream()
-                .filter(p -> p.getProdId() == prodId)
-                .findFirst().get();
+    public Product getProductById(int id) {
+        return (Product) repo.findById(id).orElse(null);
     }
 
-    public void addProduct(Product prod) {
-        products.add(prod);
+    public Product addProduct(Product product, MultipartFile imageFile) throws IOException {
+        product.setImageName(imageFile.getOriginalFilename());
+        product.setImageType(imageFile.getContentType());
+        product.setImageDate(imageFile.getBytes());
+        return repo.save(product);
     }
 
-    public void updateProduct(Product prod) {
-        int index = 0;
-        for (int i = 0; i < products.size(); i++) {
-            if (products.get(i).getProdId() == prod.getProdId()) {
-                index = i;
-            }
-        }
-        products.set(index, prod);
+    public Product updateProduct(int id, Product product, MultipartFile imageFile) throws IOException {
+        product.setImageDate(imageFile.getBytes());
+        product.setImageName(imageFile.getOriginalFilename());
+        product.setImageType(imageFile.getContentType());
+        return repo.save(product);
     }
 
-    public void deleteProduct(int prodId) {
-        int index = 0;
-        for (int i = 0; i < products.size(); i++) {
-            if (products.get(i).getProdId() == prodId) {
-                index = i;
-            }
-        }
-        products.remove(index);
+    public void deleteProduct(int id) {
+        repo.deleteById(id);
+    }
+
+    public List<Product> searchProducts(String keyword) {
+        return repo.searchProducts(keyword);
     }
 }
